@@ -5,8 +5,10 @@ import (
 	"log"
 )
 
+const token = "7426266833:AAHHmqqOnr8026lgMe0grWHvf_yRS0PPY8A"
+
 func main() {
-	bot, err := tgbotapi.NewBotAPI("7426266833:AAHHmqqOnr8026lgMe0grWHvf_yRS0PPY8A")
+	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -24,13 +26,30 @@ func main() {
 	}
 
 	for update := range updates {
-		if update.Message != nil { // If we got a message
-			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "You wrote: "+update.Message.Text)
-			msg.ReplyToMessageID = update.Message.MessageID
+		if update.Message == nil { // If we got a message
+			continue
+		}
 
-			bot.Send(msg)
+		switch update.Message.Command() {
+		case "help":
+			helpCommand(bot, update.Message)
+		default:
+			defaultBehavior(bot, update.Message)
 		}
 	}
+}
+
+func helpCommand(bot *tgbotapi.BotAPI, inputMessage *tgbotapi.Message) {
+	msg := tgbotapi.NewMessage(inputMessage.Chat.ID, "/help - help")
+
+	bot.Send(msg)
+}
+
+func defaultBehavior(bot *tgbotapi.BotAPI, inputMessage *tgbotapi.Message) {
+	log.Printf("[%s] %s", inputMessage.From.UserName, inputMessage.Text)
+
+	msg := tgbotapi.NewMessage(inputMessage.Chat.ID, "You wrote: "+inputMessage.Text)
+
+	bot.Send(msg)
 }
